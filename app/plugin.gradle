@@ -1,0 +1,93 @@
+//可以定义一个Task,让其完成buildPlugin一套文件系统的创建，
+// 这样以后再创建plugin工程的时候可以直接执行此task就可以生成好
+ext {
+    pluginPackageName = "com.lianjia.router2"
+    pluginProjectName = "buildPluginTest"
+    pluginClassName = "RouterPlugin"
+}
+
+task createPluginProject {
+    group 'plugin_create'
+    def pluginPackageName = this.pluginPackageName
+    def pluginProjectName = this.pluginProjectName
+    def pluginClassName = this.pluginClassName
+
+    doLast {
+        //第一步，开始在根工程下创建插件工程目录
+        def pluginDir = file(pluginProjectName)
+        createFile(pluginDir)
+
+        //第二步成生src文件夹
+        def srcPath = "${pluginDir.path}/src"
+        def srcFile = file(srcPath)
+        createFile(srcFile)
+
+        //第三步，生成src/main
+        def mainPath = "${srcPath}/main"
+        def mainFile = file(mainPath)
+        createFile(mainFile)
+
+        //第四步，成生main/groovy和main/resources
+        def groovyPath = "$mainPath/groovy"
+        def groovyFile = file(groovyPath)
+        createFile(groovyFile)
+        def resourcesPath = "$mainPath/resources"
+        def resourcesFile = file(resourcesPath)
+        createFile(resourcesFile)
+
+        //第五步，生成输入的包名
+        def packageNameList = ["com", "", "router2"]
+        println "the packagename is ${pluginPackageName}"
+        def pack = "$groovyPath/"
+        packageNameList.each { packName ->
+            pack += packName
+            def packFile = file(pack)
+            createFile(packFile)
+            pack = packFile.path + "/"
+        }
+
+        //第六步，成生resources下的内容
+        def metaInfPath = "${resourcesPath}/META-INF"
+        def metaInfFile = file(metaInfPath)
+        createFile(metaInfFile)
+
+        def gradlePluginPath = "${metaInfPath}/gradle-plugins"
+        def gradlePluginFile = file(gradlePluginPath)
+        createFile(gradlePluginFile)
+
+        def plguinPropertiesPath = "$gradlePluginPath/$pluginPackageName." + "properties"
+        def plguinPropertiesFile = file(plguinPropertiesPath)
+        createRealFile(plguinPropertiesFile)
+        plguinPropertiesFile.withWriter { writer ->
+            def content = "implementation-class=$pluginPackageName.$pluginClassName"
+            writer.write(content)
+        }
+
+        //第七步，生成build.gradle文件
+        def buildGradlePath = "${pluginDir.path}/build.gradle"
+        def buildGradleFile = file(buildGradlePath)
+        createRealFile(buildGradleFile)
+        buildGradleFile.withWriter { writer ->
+            writer.append("apply plugin: \'groovy\'\n\n")
+            writer.append("repositories { jcenter() }\n\n")
+            writer.append("dependencies {}\n\n")
+        }
+
+        //第8步，生成一个对应的properties属性文件
+        def propertiesPath = "${pluginDir.path}/gradle.properties"
+        def propertiesFile = file(propertiesPath)
+        createRealFile(propertiesFile)
+    }
+}
+
+void createFile(File file) {
+    if (file == null || !file.exists()) {
+        file.mkdir()
+    }
+}
+
+void createRealFile(File file) {
+    if (file == null || !file.exists()) {
+        file.createNewFile()
+    }
+}

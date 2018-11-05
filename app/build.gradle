@@ -1,5 +1,6 @@
 apply plugin: 'com.android.application'
 apply from: this.file('copyApk.gradle')
+apply from: this.file('plugin.gradle')
 
 android {
     compileSdkVersion 27
